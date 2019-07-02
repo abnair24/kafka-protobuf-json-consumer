@@ -15,14 +15,8 @@ public class ProtoUtility {
 
     public static Path getDescriptorBinary(ProtoDetail protoDetail) throws IOException, InterruptedException {
 
-        int status;
-        Path descFilePath = null;
-        try {
-            descFilePath = Files.createTempFile(Paths.get(System.getProperty("user.dir")), "ProtoDesc", ".desc");
-            logger.info("Descriptor Binary path:",descFilePath.toAbsolutePath().toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Path descFilePath = Files.createTempFile(Paths.get(System.getProperty("user.dir")), "ProtoDesc", ".desc");
+        logger.info("Descriptor Binary path:",descFilePath.toAbsolutePath().toString());
 
         ImmutableList<String> protocArgs = ImmutableList.<String>builder()
                 .add("--include_imports")
@@ -32,7 +26,7 @@ public class ProtoUtility {
                 .addAll(protoDetail.getProtoFilesPath())
                 .build();
 
-        status = new ProtocInvoker().invoke(protocArgs);
+        int status = new ProtocInvoker().invoke(protocArgs);
 
         if (status != 0) {
             logger.error("Binary file generation failed with status : " + status);
