@@ -1,0 +1,17 @@
+.DS_Store
+build/
+out/
+.idea/
+*.iml
+*.iws
+log/
+*.class
+target/
+dump.rdb
+generated-test-sources/
+classes/
+.classpath
+.project
+.settings/*
+bin/*
+*.desc
