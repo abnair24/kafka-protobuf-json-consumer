@@ -9,13 +9,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+
+/**
+ *
+ */
 public class ProtoUtility {
+
 
     private static final Logger logger = LoggerFactory.getLogger(ProtoUtility.class);
 
+
     public static Path getDescriptorBinary(ProtoDetail protoDetail) throws IOException, InterruptedException {
 
-        Path descFilePath = Files.createTempFile(Paths.get(System.getProperty("user.dir")), "ProtoDesc", ".desc");
+        Path descFilePath = Files.createTempFile("ProtoDesc", ".desc");
         logger.info("Descriptor Binary path:",descFilePath.toAbsolutePath().toString());
 
         ImmutableList<String> protocArgs = ImmutableList.<String>builder()
@@ -23,8 +29,9 @@ public class ProtoUtility {
                 .add("--include_std_types")
                 .add("--proto_path=" + protoDetail.getProtoPath())
                 .add("--descriptor_set_out=" + descFilePath.toAbsolutePath().toString())
-                .addAll(protoDetail.getProtoFilesPath())
+                .addAll(protoDetail.getProtoFiles())
                 .build();
+
 
         int status = new ProtocInvoker().invoke(protocArgs);
 

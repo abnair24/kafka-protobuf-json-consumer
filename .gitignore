@@ -15,3 +15,5 @@ classes/
 .settings/*
 bin/*
 *.desc
+index-files/
+com/

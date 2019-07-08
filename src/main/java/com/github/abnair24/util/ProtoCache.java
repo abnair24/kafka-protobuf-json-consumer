@@ -13,6 +13,9 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The type Proto cache.
+ */
 public class ProtoCache {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtoCache.class);

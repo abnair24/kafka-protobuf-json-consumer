@@ -2,15 +2,19 @@ package com.github.abnair24.util;
 
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
-import java.nio.file.Path;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProtoBufDecoder {
 
-    private static Descriptors.MethodDescriptor getDescriptor(ProtoDetail protoDetail,
+    private static final Logger logger = LoggerFactory.getLogger(ProtoBufDecoder.class);
+
+    public static Descriptors.Descriptor getDescriptor(ProtoDetail protoDetail,
                                                               String protoDescriptorFilePath) throws Exception {
 
         DescriptorProtos.FileDescriptorSet fdSet = DescriptorProtos
@@ -21,7 +25,7 @@ public class ProtoBufDecoder {
         for(DescriptorProtos.FileDescriptorProto fileDescriptorProto: fdSet.getFileList()) {
             fdList.add(ProtoCache.getFileDescriptor(fileDescriptorProto));
         }
-        return getMethodDescriptor(protoDetail,fdList);
+        return resolveMethodDescriptor(protoDetail,fdList);
     }
 
 
@@ -49,30 +53,40 @@ public class ProtoBufDecoder {
         return fileDescriptor;
     }
 
-    public static Descriptors.MethodDescriptor getMethodDescriptor(ProtoDetail protoDetail, Path descFile) throws Exception {
-        return ProtoBufDecoder.getDescriptor(protoDetail,descFile.toAbsolutePath().toString());
-    }
 
-    private static Descriptors.MethodDescriptor getMethodDescriptor(ProtoDetail protoDetail,
-                                                                    List<Descriptors.FileDescriptor>fileDescriptorList) {
-        String serviceName = protoDetail.getServiceName();
+    private static Descriptors.Descriptor resolveMethodDescriptor(ProtoDetail protoDetail,
+                                                                        List<Descriptors.FileDescriptor>fileDescriptorList) {
         String methodName = protoDetail.getMethodName();
         String packageName = protoDetail.getPackageName();
 
-        Descriptors.ServiceDescriptor serviceDescriptor=null;
+        Descriptors.Descriptor descriptor = null;
 
-        for(Descriptors.FileDescriptor fileDescriptor : fileDescriptorList) {
-            if (!fileDescriptor.getPackage().equals(packageName)) {
+        for (Descriptors.FileDescriptor fileDescriptor : fileDescriptorList) {
+            if (!isPackageSame(fileDescriptor, packageName)) {
                 continue;
-            } else {
-                serviceDescriptor = fileDescriptor.findServiceByName(serviceName);
-
-                if (serviceDescriptor == null) {
-                    throw new IllegalArgumentException("Service Not found :" + serviceName);
-                }
-                break;
             }
+            descriptor = getMethodDescriptor(fileDescriptor, methodName);
+            break;
         }
-        return serviceDescriptor.findMethodByName(methodName);
+
+        return descriptor;
+    }
+
+    private static Descriptors.Descriptor getMethodDescriptor(Descriptors.FileDescriptor fileDescriptor, String methodName) {
+        Descriptors.Descriptor descriptor = fileDescriptor.findMessageTypeByName(methodName);
+        if(descriptor == null) {
+            throw new IllegalArgumentException("Wrong method name parsed :"+ methodName);
+        }
+        return descriptor;
+    }
+
+    private static boolean isPackageSame(Descriptors.FileDescriptor fileDescriptor,String packageName) {
+        boolean status;
+        if(packageName != null && packageName.equals(fileDescriptor.getPackage())) {
+            status = true;
+        } else {
+            status  = false;
+        }
+        return status;
     }
 }
