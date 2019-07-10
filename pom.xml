@@ -8,8 +8,8 @@
     <artifactId>com.github.abnair24</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>kafka-protobuf-json-consumer</name>
-    <description>Deserializer for kafka protocol buffer messages to JSON</description>
-    <url>https://github.com/abnair24/kafka-protobuf-json-consumer</url>
+    <description>Consumer for deserializing kafka protocol buffer messages to JSON</description>
+    <url>https://github.com/abnair24/kafka-protobuf-json-protobufConsumer</url>
 
     <build>
         <plugins>
@@ -91,8 +91,6 @@
         <artifactId>lombok</artifactId>
         <version>1.18.8</version>
     </dependency>
-
-
 </dependencies>
 
 </project>

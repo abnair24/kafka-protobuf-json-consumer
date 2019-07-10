@@ -1,5 +1,7 @@
 package com.github.abnair24.util;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,20 +16,16 @@ import java.util.List;
 /**
  *
  */
+@Slf4j
+@Getter
 public class ProtoDetail {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProtoDetail.class);
 
     private final String protoPath;
     private final String packageName;
     private final String methodName;
     private final List<String> protoFiles;
+    private String descriptorBinaryPath;
 
-
-    /**
-     * @param protoPath
-     * @param fullMethodName
-     */
     public ProtoDetail(String protoPath, String fullMethodName) {
 
         this.protoPath = protoPath;
@@ -44,7 +42,7 @@ public class ProtoDetail {
         try(DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path,"*.proto")) {
             directoryStream.forEach(p -> protoFilesPaths.add(p.toString()));
         } catch(IOException ex) {
-            logger.error("Proto path error",ex);
+            log.error("Proto path error : {}",path.toString());
         }
         return protoFilesPaths;
     }
@@ -57,19 +55,7 @@ public class ProtoDetail {
         return fullMethodName.substring(length + 1);
     }
 
-    public String getProtoPath() {
-        return protoPath;
-    }
-
-    public String getPackageName() {
-        return packageName;
-    }
-
-    public String getMethodName() {
-        return methodName;
-    }
-
-    public List<String> getProtoFiles() {
-        return protoFiles;
+    public void setDescriptorBinaryPath(String descriptorBinaryPath) {
+        this.descriptorBinaryPath = descriptorBinaryPath;
     }
 }

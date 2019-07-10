@@ -2,30 +2,38 @@ package com.github.abnair24.util;
 
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import lombok.extern.slf4j.Slf4j;
 import java.io.FileInputStream;
-
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class ProtoBufDecoder {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProtoBufDecoder.class);
+    private final ProtoDetail protoDetail;
 
-    public static Descriptors.Descriptor getDescriptor(ProtoDetail protoDetail,
-                                                              String protoDescriptorFilePath) throws Exception {
+    public ProtoBufDecoder(ProtoDetail protoDetail) {
+        this.protoDetail = protoDetail;
+    }
+
+    public Descriptors.Descriptor invokeDescriptorBinary() throws Exception {
+        Path binaryPath = ProtoCache.getBinary(protoDetail);
+        protoDetail.setDescriptorBinaryPath(binaryPath.toAbsolutePath().toString());
+        return getDescriptor();
+    }
+
+    private Descriptors.Descriptor getDescriptor() throws Exception {
 
         DescriptorProtos.FileDescriptorSet fdSet = DescriptorProtos
-                .FileDescriptorSet.parseFrom(new FileInputStream(protoDescriptorFilePath));
+                .FileDescriptorSet.parseFrom(new FileInputStream(protoDetail.getDescriptorBinaryPath()));
 
         List<Descriptors.FileDescriptor> fdList = new ArrayList<>();
 
         for(DescriptorProtos.FileDescriptorProto fileDescriptorProto: fdSet.getFileList()) {
             fdList.add(ProtoCache.getFileDescriptor(fileDescriptorProto));
         }
-        return resolveMethodDescriptor(protoDetail,fdList);
+        return resolveMethodDescriptor(fdList);
     }
 
 
@@ -54,8 +62,7 @@ public class ProtoBufDecoder {
     }
 
 
-    private static Descriptors.Descriptor resolveMethodDescriptor(ProtoDetail protoDetail,
-                                                                        List<Descriptors.FileDescriptor>fileDescriptorList) {
+    private Descriptors.Descriptor resolveMethodDescriptor(List<Descriptors.FileDescriptor>fileDescriptorList) {
         String methodName = protoDetail.getMethodName();
         String packageName = protoDetail.getPackageName();
 
@@ -75,13 +82,17 @@ public class ProtoBufDecoder {
     private static Descriptors.Descriptor getMethodDescriptor(Descriptors.FileDescriptor fileDescriptor, String methodName) {
         Descriptors.Descriptor descriptor = fileDescriptor.findMessageTypeByName(methodName);
         if(descriptor == null) {
-            throw new IllegalArgumentException("Wrong method name parsed :"+ methodName);
+            throw new IllegalArgumentException("Method name not found :"+ methodName);
         }
         return descriptor;
     }
 
     private static boolean isPackageSame(Descriptors.FileDescriptor fileDescriptor,String packageName) {
         boolean status;
+        if(fileDescriptor.getPackage() == "") {
+            log.error("Filedescriptor loading failed for file :{}",fileDescriptor.getName());
+            throw new IllegalArgumentException("Package name empty in "+fileDescriptor.getName());
+        }
         if(packageName != null && packageName.equals(fileDescriptor.getPackage())) {
             status = true;
         } else {

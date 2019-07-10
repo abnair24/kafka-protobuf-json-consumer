@@ -1,4 +1,4 @@
-import com.github.abnair24.kafkaConsumer.Consumer;
+import com.github.abnair24.kafkaConsumer.ProtobufConsumer;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -12,16 +12,24 @@ public class TestClass {
 
         topics.add("completed_godeals_voucher_purchases");
 
-        Consumer consumer = new Consumer(""G,
-                "group-test-automation-4",
+        ProtobufConsumer protobufConsumer = new ProtobufConsumer("10.14.3.7:6667",
+                "group-test-automation-1",
                 topics,
-                "/Users/aswathyn/Documents/GoJek/codebase/gopoints-api-tests/src/test/resources",
-                "");
+                "/Users/aswathyn/Personal/Docs/Java-WS/kafka-protobuf-json-consumer/src/main/resources",
+                "com.gopoints.voucher.order_service.transactions.CompletedVoucherPurchaseEvent");
 
-        list = consumer.init(2);
+        try {
+            list = protobufConsumer.init(2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         for(JsonObject j : list) {
             System.out.println(j.toString());
+           if(j.has("173100693530020729")){
+
+           }
         }
 
 

@@ -1,45 +1,57 @@
 package com.github.abnair24.kafkaConsumer;
 
 import com.github.abnair24.jsonFormatter.JsonFormater;
-import com.github.abnair24.util.ProtoBufDecoder;
-import com.github.abnair24.util.ProtoDetail;
-import com.github.abnair24.util.ProtoUtility;
 import com.google.gson.JsonObject;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 
-import java.nio.file.Path;
 
+@Slf4j
 public class ProtobufToJson {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProtobufToJson.class);
+    private final Descriptors.Descriptor descriptor;
 
-    public static JsonObject protobufToJson(String protoPath,String fullMethod,byte[] inputData) throws Exception {
+    public ProtobufToJson(Descriptors.Descriptor descriptor) {
+        this.descriptor = descriptor;
+    }
 
-        ProtoDetail protoDetail = new ProtoDetail(protoPath,fullMethod);
+    public JsonObject protobufToJsonObject(byte[] inputData) {
 
-        Path path = ProtoUtility.getDescriptorBinary(protoDetail);
-
-        Descriptors.Descriptor methodDescriptor = ProtoBufDecoder.getDescriptor(protoDetail,path.toAbsolutePath().toString());
-
-        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(methodDescriptor,
-                inputData);
-
+        DynamicMessage dynamicMessage = null;
+        try {
+            dynamicMessage = DynamicMessage.parseFrom(descriptor,inputData);
+        } catch (InvalidProtocolBufferException e) {
+            log.error("Dynamic message parsing failed: {}",e.getMessage());
+        }
         return JsonFormater.toJsonObject(dynamicMessage);
     }
 
-    public static String protobufToJsonString(String protoPath,String fullMethod,byte[] inputData) throws Exception {
+//    public static JsonObject protobufToJson(String protoPath,String fullMethod,byte[] inputData) throws Exception {
+//
+//        ProtoDetail protoDetail = new ProtoDetail(protoPath,fullMethod);
+//
+//        Path path = ProtoCache.getBinary(protoDetail);
+//
+//        Descriptors.Descriptor methodDescriptor = ProtoBufDecoder.getDescriptor(protoDetail,path.toAbsolutePath().toString());
+//
+//        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(methodDescriptor,
+//                inputData);
+//
+//        return JsonFormater.toJsonObject(dynamicMessage);
+//    }
 
-        ProtoDetail protoDetail = new ProtoDetail(protoPath,fullMethod);
-
-        Path path = ProtoUtility.getDescriptorBinary(protoDetail);
-
-        Descriptors.Descriptor methodDescriptor = ProtoBufDecoder.getDescriptor(protoDetail,path.toAbsolutePath().toString());
-
-        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(methodDescriptor,inputData);
-
-        return JsonFormater.toJson(dynamicMessage);
-    }
+//    public static String protobufToJsonString(String protoPath,String fullMethod,byte[] inputData) throws Exception {
+//
+//        ProtoDetail protoDetail = new ProtoDetail(protoPath,fullMethod);
+//
+//        Path path = ProtoCache.getBinary(protoDetail);
+//
+//        Descriptors.Descriptor methodDescriptor = ProtoBufDecoder.getDescriptor(protoDetail,path.toAbsolutePath().toString());
+//
+//        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(methodDescriptor,inputData);
+//
+//        return JsonFormater.toJson(dynamicMessage);
+//    }
 }

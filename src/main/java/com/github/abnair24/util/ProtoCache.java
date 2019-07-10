@@ -6,6 +6,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +17,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * The type Proto cache.
  */
+@Slf4j
 public class ProtoCache {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProtoCache.class);
 
     private static LoadingCache<DescriptorProtos.FileDescriptorProto, Descriptors.FileDescriptor> fdCache = CacheBuilder
             .newBuilder()
@@ -40,11 +40,9 @@ public class ProtoCache {
             .recordStats()
             .build();
 
-
     public static Descriptors.FileDescriptor getFileDescriptor(DescriptorProtos.FileDescriptorProto fileDescriptorProto) throws Exception {
         Descriptors.FileDescriptor fileDescriptor = fdCache.get(fileDescriptorProto);
-        logger.info("Stats:{}", fdCache.stats());
-
+        log.info("Stats:{}", fdCache.stats());
         return fileDescriptor;
     }
 
@@ -55,7 +53,7 @@ public class ProtoCache {
     public static Path getBinary(ProtoDetail protoDetail) throws Exception {
 
         Path path = descriptorBinaryCache.getIfPresent("descriptor.desc");
-        logger.info("DescriptorCache Stats: {}",descriptorBinaryCache.stats());
+        log.info("DescriptorCache Stats: {}",descriptorBinaryCache.stats());
         if (path == null) {
             path = ProtoUtility.getDescriptorBinary(protoDetail);
             descriptorBinaryCache.put("descriptor.desc", path);

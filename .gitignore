@@ -16,3 +16,4 @@ classes/
 bin/*
 *.desc
 index-files/
+src/main/resources/sample.proto
