@@ -13,39 +13,40 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class KafkaProcessor {
+public class KafkaProcessor<T> {
 
     private final String bootstrapServer;
     private final String groupId;
     private final List<String> topics;
     private final String protoPath;
     private final String fullMethodName;
-    private final String key;
+    private final T key;
     private KafkaConsumer<byte[],byte[]> kafkaConsumer;
     private KafkaConsumerRunner kafkaConsumerRunner;
     private BlockingQueue<JsonObject> blockingQueue;
     private ProtoDetail protoDetail;
     private ProtoBufDecoder protobufDecoder;
     private Descriptors.Descriptor descriptor;
-    private QueueConsumer queueConsumer;
+    private JsonQueueConsumer jsonQueueConsumer;
     private AtomicBoolean closed;
 
-    public KafkaProcessor(String bootstrapServer, String groupId, List<String> topics, String protoPath, String fullMethodName, String key) {
+    public KafkaProcessor(String bootstrapServer, String groupId, List<String> topics, String protoPath, String fullMethodName, T key) {
         this.bootstrapServer = bootstrapServer;
         this.groupId = groupId;
         this.topics = topics;
         this.protoPath = protoPath;
         this.fullMethodName = fullMethodName;
-        this.blockingQueue = new ArrayBlockingQueue<>(1000);
+        this.blockingQueue = new SynchronousQueue<>();
         this.key = key;
         closed = new AtomicBoolean(false);
     }
@@ -83,8 +84,9 @@ public class KafkaProcessor {
         decodeProtobuf();
         getDescriptor();
         new Thread(new KafkaConsumerRunner(this)).start();
-        queueConsumer = new QueueConsumer(blockingQueue,key);
-        JsonObject jsonObject = queueConsumer.start(closed);
+
+        jsonQueueConsumer = new JsonQueueConsumer(blockingQueue,key);
+        JsonObject jsonObject = jsonQueueConsumer.start(closed);
         shutdown();
         return jsonObject;
     }
@@ -94,12 +96,9 @@ public class KafkaProcessor {
             if (kafkaConsumerRunner != null) {
                 kafkaConsumerRunner.shutdownConsumer();
             }
-            if (kafkaConsumer != null) {
-                    kafkaConsumer.close();
-            }
-        }catch (Exception ex) {
-            System.out.println(ex.toString());
-            log.error("Failed to shutdown cosumer : {}",ex.toString(),ex);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            log.error("Failed to shutdown consumer : {}",ex.toString(),ex.getMessage());
         }
     }
 
@@ -119,15 +118,22 @@ public class KafkaProcessor {
             try {
                 startTimestamp = TimeUtil.getCurrentTimeInMilliseconds();
                 protobufToJson = new ProtobufToJson(kafkaProcessor.descriptor);
+                ConsumerRecords<byte[], byte[]> records;
+
                 while(!kafkaProcessor.closed.get()) {
-                    ConsumerRecords<byte[], byte[]> records = kafkaProcessor.kafkaConsumer.poll(Duration.ofMillis(1000));
-                    System.out.println(records.count());
-                    if(records.count()>0){
-                        records.forEach(record ->processRecords(record));
+                    synchronized ( kafkaProcessor.kafkaConsumer) {
+                        records = kafkaProcessor.kafkaConsumer.poll(Duration.ofMillis(1000));
+
+                        log.info("Records fetched : {} ",records.count());
+
+                        if(records.count()>0){
+                            records.forEach(record ->processRecords(record));
+                        }
                     }
                 }
                 log.info("closed status : {}",kafkaProcessor.closed.get());
-            }catch(WakeupException ex) {
+
+            } catch(WakeupException ex) {
                 if(!kafkaProcessor.closed.get()){
                     log.error("Exception on closing : {} ",ex.getMessage());
                     throw ex;
@@ -149,6 +155,7 @@ public class KafkaProcessor {
 
         private boolean putJsonObjectInQueue(JsonObject jsonObject) {
             try {
+                log.debug("Putting message to queue : {}",jsonObject.toString());
                 kafkaProcessor.blockingQueue.put(jsonObject);
                 return true;
             }catch (InterruptedException ex) {
@@ -162,6 +169,7 @@ public class KafkaProcessor {
             log.info("consumer shutdown");
             kafkaProcessor.closed.set(true);
             kafkaProcessor.kafkaConsumer.wakeup();
+            kafkaProcessor.kafkaConsumer.close();
         }
 
     }

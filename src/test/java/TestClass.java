@@ -19,6 +19,10 @@ public class TestClass {
                     "/Users/aswathyn/Personal/Docs/Java-WS/kafka-protobuf-json-consumer/src/main/resources",
                     "com.gopoints.voucher.order_service.transactions.CompletedVoucherPurchaseEvent",
                     "173100693530020729").init();
+
+             // RUNING THE TEST CASES HERE
+            //
+
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
