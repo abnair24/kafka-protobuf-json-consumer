@@ -4,11 +4,10 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.JsonObject;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class ProtoCache {
 
-    private static LoadingCache<DescriptorProtos.FileDescriptorProto, Descriptors.FileDescriptor> fdCache = CacheBuilder
+    private static final LoadingCache<DescriptorProtos.FileDescriptorProto, Descriptors.FileDescriptor> fdCache = CacheBuilder
             .newBuilder()
             .maximumSize(1000)
             .expireAfterWrite(30, TimeUnit.MINUTES)

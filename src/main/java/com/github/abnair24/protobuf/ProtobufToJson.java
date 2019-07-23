@@ -1,4 +1,4 @@
-package com.github.abnair24.kafkaConsumer;
+package com.github.abnair24.protobuf;
 
 import com.github.abnair24.jsonFormatter.JsonFormater;
 import com.google.gson.JsonObject;
